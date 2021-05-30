@@ -6,6 +6,8 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Float32, Float64
 from tf2_msgs.msg import TFMessage
 import tf
+import tkinter
+from tkinter import *
 
 import numpy as np
 import symbol
@@ -16,7 +18,7 @@ import geometry_msgs
 
 from rospy.exceptions import ROSTimeMovedBackwardsException
 
-import scipy
+from scipy import signal
 
 """
 dot_theta  = [     0       1 ]theta     + [      0     ] dot_p
@@ -49,21 +51,21 @@ class states:
         self.mc = 0.11377 #pendulum mass
         self.M = self.mp + self.mc
         self.l = 0.25 #half pendulum lengh
-        self.g = 9.8 #gravity
+        self.g = -9.8 #gravity
         
         self.I = 0.00651 #Rotational Inertia
         self.L= (self.I + self.mp*self.l*self.l)/self.mp*self.l
-        self.R = 2.6 #Motor Armature Resistance
-        self.r = 0.00635 #Motor Pinion Radius
-        self.Km = 0.00767 #Motor Torque Constant
-        self.Kg = 1 #Gear-box Ratio
+        # self.R = 2.6 #Motor Armature Resistance
+        # self.r = 0.00635 #Motor Pinion Radius
+        # self.Km = 0.00767 #Motor Torque Constant
+        # self.Kg = 1 #Gear-box Ratio
 
         self.desired_pose = 0
 
-        self.k1 = -15.3
-        self.k2 = -0.56
-        self.k3 = 0.5
-        self.k4 = 0.5
+        self.k3 = 15.3
+        self.k4 = 0.56
+        self.k2 = -0.8
+        self.k1 = -0.5
         # self.g/(self.L-self.mp*self.l/self.M)
         # 1/self.M*(self.L-self.mp*self.l/self.M)*(self.Km*self.Km*self.Kg*self.Kg)/self.R*self.r*self.r
     
@@ -99,22 +101,31 @@ class states:
     def K_compute(self):
 
         M = self.M
-        Km = self.Km
-        Kg = self.Kg
-        r = self.r
-        L = self.L
+        mp = self.mp
+        mc = self.mc
+        l = self.l
+        g = self.g
 
         #matrix A and B 
-        A = np.array([  [ 0, 1 ], 
-                        [self.g/( L- (self.mp*self.l/M) ), 0]])
+        A = np.array([ [ 0, 1, 0, 0], 
+                        [0, 0, -(g*mp)/(mc), 0],
+                        [0, 0, 0, 1],
+                        [0, 0, g*M/(l*mp), 0] ])
 
         B = np.array([  [0], 
-                        [(1/( M*(L-(self.mp*self.l/M) ) )) * ( (Km*Km*Kg*Kg)/(self.R*r*r) )]])
+                        [1/(mc)],
+                        [0],
+                        [-1/l*mc] ])
 
-        desired_Poles = np.array([-0.2, -0.5])
-
-        # print(scipy.signal.place_poles(A,B,desired_Poles))
-        #ecuacion caracteristica deseada
+        desired_Poles = np.array([-2, -1.0+1j, -1-1j, -10])
+        
+        fs = signal.place_poles(A,B,desired_Poles)
+        # rospy.logwarn("las K son")
+        # print(fs.gain_matrix)
+        # self.k1 = fs.gain_matrix[0,3]
+        # self.k2 = fs.gain_matrix[0,2]
+        # self.k3 = fs.gain_matrix[0,1]
+        # self.k4 = fs.gain_matrix[0,0]
 
     def states_publisher(self):
         self.angle_pub.publish(self.angle)
@@ -123,13 +134,11 @@ class states:
         self.cart_vel_pub.publish(self.cart_velocity)
     
     def control_action(self):
-        # -15.3 -0.56
-        # u = -15.3*self.angle - 0.56*self.angle_vel + 0.5*self.cart_velocity + 0.5*(self.cart_position-self.desired_pose)
         k1 = self.k1
         k2 = self.k2
         k3 = self.k3
         k4 = self.k4
-        u = k1*self.angle + k2*self.angle_vel + k3*self.cart_velocity + k4*(self.cart_position-self.desired_pose)
+        u = -k3*self.angle - k4*self.angle_vel - k2*self.cart_velocity - k1*(self.cart_position-self.desired_pose)
         self.u_pub.publish(u)
         
 

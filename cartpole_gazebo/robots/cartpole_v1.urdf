@@ -32,20 +32,19 @@
       </material>
     </visual>
     <collision>
-      <!-- <origin
-        xyz="0 0 0"
-        rpy="1.5707963267949 0 0" /> -->
         <origin
           xyz="0 0 0.26"
           rpy="0 0 0" />
       <geometry>
         <cylinder radius="0.015" length="0.48"/>
-        <!-- <mesh
-          filename="package://cartpole_gazebo/meshes/pole.STL" /> -->
       </geometry>
     </collision>
   </link>
-  
+
+  <gazebo reference="pole">
+      <material>Gazebo/Blue</material>
+  </gazebo>
+
 <joint name="cart_pole" type="continuous">
     <origin xyz="0 0 0.030" rpy="0 0 0"></origin>
     <parent link="cart"></parent>
@@ -86,19 +85,18 @@
       </material>
     </visual>
     <collision>
-      <!-- <origin
-        xyz="0 0 0"
-        rpy="1.5707963267949 0 0" /> -->
         <origin
         xyz="0 0 0"
         rpy="0 0 0" />
       <geometry>
         <box size="0.1 0.05 0.05"/>
-        <!-- <mesh
-          filename="package://cartpole_gazebo/meshes/cart.STL" /> -->
       </geometry>
     </collision>
   </link>
+
+  <gazebo reference="cart">
+      <material>Gazebo/Yellow</material>
+  </gazebo>
   
   <joint name="stand_cart" type="prismatic">
     <origin xyz="0 0.0 0.150" rpy="0 0 0"></origin>
@@ -140,21 +138,18 @@
       </material>
     </visual>
     <collision>
-      <!-- <origin
-        xyz="0 0 0"
-        rpy="1.5707963267949 0 0" /> -->
         <origin
         xyz="0 0 0.1"
         rpy="0 0 1.5707963267949" />
       <geometry>
       <box size="0.015 1.05 0.16"/>
-        <!-- <mesh
-          filename="package://cartpole_gazebo/meshes/stand.STL" /> -->
       </geometry>
     </collision>
   </link>
 
-
+  <gazebo reference="stand">
+      <material>Gazebo/Silver</material>
+  </gazebo>
 
  <link name="world"/>
 
